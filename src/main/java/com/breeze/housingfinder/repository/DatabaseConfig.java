@@ -25,7 +25,6 @@ public class DatabaseConfig {
     private String dbJdbcUrl;
 
     private DataSource dataSource;
-
     private ResourceLoader resourceLoader;
 
     @Autowired
