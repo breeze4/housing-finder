@@ -10,6 +10,7 @@ import com.rometools.rome.io.XmlReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Component
 public class Scraper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Scraper.class);
@@ -28,17 +30,15 @@ public class Scraper {
             "&bedrooms=2" +
             "&housing_type=9" +
             "&format=rss";
-    private static final Pattern KEY_PATTERN = Pattern.compile("[\\S](\\d+?).html");
+    private static final Pattern KEY_PATTERN = Pattern.compile("[\\S]+?(\\d+?).html");
     private final ListingRepository listingRepository;
-    private final ObjectMapper objectMapper;
 
     @Autowired
-    public Scraper(ListingRepository listingRepository, ObjectMapper objectMapper) {
+    public Scraper(ListingRepository listingRepository) {
         this.listingRepository = listingRepository;
-        this.objectMapper = objectMapper;
     }
 
-    private void scrapeListings() {
+    public void scrapeListings() {
         try {
             URL feedUrl = new URL(TARGET_URL);
 
@@ -64,14 +64,10 @@ public class Scraper {
             LOGGER.error("Error while parsing URL {}, not valid", url);
         }
 
-        Map<String, Object> entryMap = objectMapper.convertValue(entry, Map.class);
-        String data = "";
-        try {
-            data = objectMapper.writeValueAsString(entryMap);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("Error while parsing data {}, not valid", entryMap);
-            e.printStackTrace();
-        }
-        return new RawListing(key, url, data);
+        String title = entry.getTitle();
+        String publishedDate = entry.getPublishedDate().toString();
+        String description = entry.getDescription().getValue();
+
+        return new RawListing(key, url, title, publishedDate, description);
     }
 }

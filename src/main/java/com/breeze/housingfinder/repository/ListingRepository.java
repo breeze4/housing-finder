@@ -2,11 +2,14 @@ package com.breeze.housingfinder.repository;
 
 import com.breeze.housingfinder.scrape.RawListing;
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -14,7 +17,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class ListingRepository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ListingRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
@@ -29,8 +35,10 @@ public class ListingRepository {
         String checkIfListingExistsSql = "SELECT count(*) from HOUSING.RAW_LISTINGS L WHERE L.key = ?";
         Integer listingCount = jdbcTemplate.queryForObject(checkIfListingExistsSql, Integer.class, rawListing.getKey());
         if (listingCount == 0) {
-            String insertListingSql = "INSERT INTO HOUSING.RAW_LISTINGS (key, url, data) VALUES (?, ?, ?)";
-            jdbcTemplate.update(insertListingSql, rawListing.getKey(), rawListing.getUrl(), rawListing.getData());
+            String insertListingSql = "INSERT INTO HOUSING.RAW_LISTINGS (key, url, title, publishedDate, description) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+            jdbcTemplate.update(insertListingSql, rawListing.getKey(), rawListing.getUrl(), rawListing.getTitle(),
+                    rawListing.getPublishedDate(), rawListing.getDescription());
         }
     }
 
@@ -48,15 +56,19 @@ public class ListingRepository {
                 .filter((listing) -> !existingKeysSet.contains(listing.getKey()))
                 .collect(Collectors.toList());
         // save the rest
-        String insertListingSql = "INSERT INTO HOUSING.RAW_LISTINGS (key, url, data) VALUES (?, ?, ?)";
-        jdbcTemplate.batchUpdate(insertListingSql, listingsToBeAdded, listingsToBeAdded.size(), new ParameterizedPreparedStatementSetter<RawListing>() {
-            @Override
-            public void setValues(PreparedStatement ps, RawListing listing) throws SQLException {
-                ps.setString(1, listing.getKey());
-                ps.setString(2, listing.getUrl());
-                ps.setString(3, listing.getData());
-            }
-        });
+        String insertListingSql = "INSERT INTO HOUSING.RAW_LISTINGS (key, url, title, publishedDate, description) " +
+                "VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.batchUpdate(insertListingSql, listingsToBeAdded, listingsToBeAdded.size(),
+                new ParameterizedPreparedStatementSetter<RawListing>() {
+                    @Override
+                    public void setValues(PreparedStatement ps, RawListing listing) throws SQLException {
+                        ps.setString(1, listing.getKey());
+                        ps.setString(2, listing.getUrl());
+                        ps.setString(3, listing.getTitle());
+                        ps.setString(4, listing.getPublishedDate());
+                        ps.setString(5, listing.getDescription());
+                    }
+                });
     }
 
 }
