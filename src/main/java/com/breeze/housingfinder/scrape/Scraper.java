@@ -1,8 +1,6 @@
 package com.breeze.housingfinder.scrape;
 
 import com.breeze.housingfinder.repository.ListingRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
@@ -13,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,7 +36,7 @@ public class Scraper {
         this.listingRepository = listingRepository;
     }
 
-    public void scrapeListings() {
+    public List<String> scrapeListings() {
         try {
             URL feedUrl = new URL(TARGET_URL);
 
@@ -46,12 +44,14 @@ public class Scraper {
             SyndFeed feed = input.build(new XmlReader(feedUrl));
             List<SyndEntry> entries = feed.getEntries();
             List<RawListing> rawListings = entries.stream().map(this::scrapeListing).collect(Collectors.toList());
-            listingRepository.saveRawListings(rawListings);
+            List<String> savedKeys = listingRepository.saveRawListings(rawListings);
+            return savedKeys;
 
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("ERROR: " + ex.getMessage());
         }
+        return Collections.emptyList();
     }
 
     private RawListing scrapeListing(SyndEntry entry) {

@@ -31,6 +31,11 @@ public class ListingRepository {
         this.namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate.getDataSource());
     }
 
+    public RawListing loadRawListing(String key) {
+        String querySql = "SELECT * FROM HOUSING.RAW_LISTINGS L where L.key = ?";
+        return jdbcTemplate.queryForObject(querySql, RawListing.class, key);
+    }
+
     public void saveRawListing(RawListing rawListing) {
         String checkIfListingExistsSql = "SELECT count(*) from HOUSING.RAW_LISTINGS L WHERE L.key = ?";
         Integer listingCount = jdbcTemplate.queryForObject(checkIfListingExistsSql, Integer.class, rawListing.getKey());
@@ -42,7 +47,7 @@ public class ListingRepository {
         }
     }
 
-    public void saveRawListings(List<RawListing> rawListings) {
+    public List<String> saveRawListings(List<RawListing> rawListings) {
         // gather list of keys
         List<String> allKeys = rawListings.stream().map(RawListing::getKey).collect(Collectors.toList());
         // query for any keys that exist in the table (select from where in (..))
@@ -59,16 +64,14 @@ public class ListingRepository {
         String insertListingSql = "INSERT INTO HOUSING.RAW_LISTINGS (key, url, title, publishedDate, description) " +
                 "VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.batchUpdate(insertListingSql, listingsToBeAdded, listingsToBeAdded.size(),
-                new ParameterizedPreparedStatementSetter<RawListing>() {
-                    @Override
-                    public void setValues(PreparedStatement ps, RawListing listing) throws SQLException {
-                        ps.setString(1, listing.getKey());
-                        ps.setString(2, listing.getUrl());
-                        ps.setString(3, listing.getTitle());
-                        ps.setString(4, listing.getPublishedDate());
-                        ps.setString(5, listing.getDescription());
-                    }
+                (ps, listing) -> {
+                    ps.setString(1, listing.getKey());
+                    ps.setString(2, listing.getUrl());
+                    ps.setString(3, listing.getTitle());
+                    ps.setString(4, listing.getPublishedDate());
+                    ps.setString(5, listing.getDescription());
                 });
+        return listingsToBeAdded.stream().map(RawListing::getKey).collect(Collectors.toList());
     }
 
 }

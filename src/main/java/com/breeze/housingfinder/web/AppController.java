@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+
 @RestController
 public class AppController {
 
@@ -16,9 +18,9 @@ public class AppController {
     }
 
     @RequestMapping("/scrape")
-    public String index() {
-        scraper.scrapeListings();
-        return "finished scraping";
+    public List<String> index() {
+        List<String> savedListingKeys = scraper.scrapeListings();
+        return savedListingKeys;
     }
 
 }
