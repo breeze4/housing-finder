@@ -10,7 +10,9 @@ public class ParsedListing extends AbstractValueObject {
     private final String url;
     private final String title;
     private final String publishedDate;
-    private final String description;
+    private final String postBody;
+    private final String mapLinkUrl;
+    private final String address;
 
     @JsonCreator
     public ParsedListing(
@@ -18,12 +20,16 @@ public class ParsedListing extends AbstractValueObject {
             @JsonProperty("url") String url,
             @JsonProperty("title") String title,
             @JsonProperty("publishedDate") String publishedDate,
-            @JsonProperty("description") String description) {
+            @JsonProperty("postBody") String postBody,
+            @JsonProperty("mapLinkUrl") String mapLinkUrl,
+            @JsonProperty("address") String address) {
         this.key = key;
         this.url = url;
         this.title = title;
         this.publishedDate = publishedDate;
-        this.description = description;
+        this.postBody = postBody;
+        this.mapLinkUrl = mapLinkUrl;
+        this.address = address;
     }
 
     public String getKey() {
@@ -42,7 +48,15 @@ public class ParsedListing extends AbstractValueObject {
         return publishedDate;
     }
 
-    public String getDescription() {
-        return description;
+    public String getPostBody() {
+        return postBody;
+    }
+
+    public String getMapLinkUrl() {
+        return mapLinkUrl;
+    }
+
+    public String getAddress() {
+        return address;
     }
 }
